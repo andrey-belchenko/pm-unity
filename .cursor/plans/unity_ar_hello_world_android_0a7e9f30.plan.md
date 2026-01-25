@@ -1,6 +1,6 @@
 ---
 name: Unity AR Minimal Android
-overview: Guide user through creating a minimal Unity AR application for Android using Unity Editor tools, with plane detection and object placement functionality. Project will be saved to current workspace for future AI-assisted development.
+overview: Guide user through creating a minimal Unity AR app for Android using the AR Mobile project template and standard Unity tools. Project saved to current workspace for future AI-assisted development.
 todos: []
 isProject: false
 ---
@@ -9,243 +9,195 @@ isProject: false
 
 ## Overview
 
-Guide you through creating a minimal Unity AR application for Android using Unity Editor's standard tools. The app will detect horizontal surfaces (planes) and allow placing a simple 3D object via screen tap. This serves as a learning project to familiarize with Unity development tools and AR Foundation.
+Use Unity's **AR Mobile** project template to create a minimal AR app for Android. The template pre-configures the project (URP, AR Foundation, XR Interaction Toolkit, ARCore), includes a **SampleScene** with plane detection and object spawning, and is ready for mobile AR. You will use Unity Hub and the Editor only—no custom scripts or manual AR setup.
 
-**Important**: This is a guided walkthrough - you'll use Unity Editor's GUI to create the project, and it will be saved to the current workspace (`C:\Repos\github\pm-unity\`) for future AI-assisted improvements.
+**Important**: Save the project to the current workspace (`C:\Repos\github\pm-unity\`) so you can iterate on it with AI later.
 
-## Project Structure
+**References (all verified from official Unity docs):**
 
-After following the guide, your Unity project will have this structure:
+- [AR Mobile Template Quick Start](https://docs.unity3d.com/Packages/com.unity.template.ar-mobile@2.0/manual/index.html)
+- [Create an XR project](https://docs.unity3d.com/6000.1/Documentation/Manual/xr-create-projects.html)
+- [Configure your AR development environment](https://learn.unity.com/tutorial/configure-your-ar-development-environment) (Unity Learn)
+- [Build your application for Android](https://docs.unity3d.com/6000.1/Documentation/Manual/android-BuildProcess.html)
+- [Debug on Android devices](https://docs.unity3d.com/6000.1/Documentation/Manual/android-debugging-on-an-android-device.html)
+- [Choose and configure XR provider plug-ins](https://docs.unity3d.com/6000.1/Documentation/Manual/xr-configure-providers.html)
+
+---
+
+## What the AR Mobile Template Provides
+
+The template configures the project and includes a ready-made scene. You do **not** install AR Foundation or ARCore manually, or create XR Origin / AR Session from scratch.
+
+- **Render pipeline**: URP (Universal Render Pipeline)
+- **Packages**: AR Foundation, XR Interaction Toolkit, ARKit XR Plug-in, ARCore XR Plug-in
+- **Scene**: `SampleScene` in `Assets/Scenes`
+- **XR Origin (AR Rig)**: AR Plane Manager, AR Raycast Manager, Input Action Manager, Main Camera (AR Camera Manager, AR Camera Background), Screen Space Ray Interactor (touchscreen gestures)
+- **AR Session**: AR Session, AR Input Manager
+- **Object Spawner**: Spawns XR Interactables via `ARInteractionSpawnTrigger`
+- **Screen Space UI**: Create menu (spawn objects), Options modal (e.g. Show Interaction Hints, Visualize Surfaces, Remove All Objects, AR Debug Menu)
+
+**Minimal AR functionality** = use `SampleScene` as-is: detect planes, open the create menu, tap to place objects. You can optionally strip example assets later (see below).
+
+---
+
+## Project Structure (After Creating from Template)
 
 ```
 pm-unity/
 ├── Assets/
 │   ├── Scenes/
-│   │   └── ARScene.unity                # Main AR scene
-│   ├── Scripts/
-│   │   └── ARPlacementController.cs     # AR placement script
-│   └── Prefabs/
-│       └── ARObject.prefab              # Simple 3D object prefab (cube/sphere)
-├── ProjectSettings/                      # Unity project settings (auto-generated)
-└── Packages/                            # Unity packages (auto-generated)
+│   │   └── SampleScene.unity
+│   └── MobileARTemplateAssets/     (optional; can delete for minimal setup)
+├── ProjectSettings/
+└── Packages/
 ```
 
-## Step-by-Step Implementation Guide
+---
 
-### Step 1: Create Unity Project in Current Workspace
+## Step-by-Step Guide
+
+### Step 1: Create Project with AR Mobile Template
 
 **In Unity Hub:**
 
-- Click "New Project"
-- Select "3D (Built-in Render Pipeline)" template
-- **Important**: Set project location to `C:\Repos\github\pm-unity\` (or browse to current workspace)
-- Name: `pm-unity` (or keep existing name)
-- Click "Create project"
+1. Click **New Project**.
+2. Select the **AR Mobile** template.  
+   - If you don’t see it, click **Download template** when prompted.
+3. Set **Project location** to `C:\Repos\github\pm-unity\` (or your workspace root).  
+   - Ensure you’re not creating a subfolder like `pm-unity\pm-unity`; the project root should be the workspace.
+4. Set **Project name** (e.g. `pm-unity`) and click **Create project**.
 
-**What you'll learn**: Unity Hub project creation, workspace organization
+**What you’ll use:** Unity Hub, project creation, workspace layout.
 
-### Step 2: Configure Project for Android
+---
 
-**In Unity Editor:**
+### Step 2: Add Android Support (If Missing)
 
-- Go to `File > Build Settings`
-- Select "Android" platform
-- Click "Switch Platform" (wait for conversion)
-- Click "Player Settings" button
-- In Player Settings:
-  - **Other Settings**:
-    - Minimum API Level: Android 7.0 'Nougat' (API level 24) - required for ARCore
-    - Target API Level: Automatic (highest installed)
-    - Scripting Backend: IL2CPP
-    - Target Architectures: ✓ ARM64 (required for ARCore)
-  - **XR Plug-in Management**:
-    - Click "Install XR Plugin Management" if prompted
-    - Under "Android" tab, enable ✓ "ARCore"
+The template supports iOS and Android. You need the **Android** module for building to your phone.
 
-**What you'll learn**: Platform switching, Android build configuration, XR settings
+- If **Android** is missing when you add a build profile or switch platform: in Unity Hub go to **Installs** → your Unity version → **Add modules** → enable **Android Build Support** and install.  
+- See [Create an XR project](https://docs.unity3d.com/6000.1/Documentation/Manual/xr-create-projects.html) and [Build your application for Android](https://docs.unity3d.com/6000.1/Documentation/Manual/android-BuildProcess.html).
 
-### Step 3: Install AR Foundation Packages
+---
 
-**In Unity Editor:**
+### Step 3: Configure XR Plug-in Management for Android
 
-- Go to `Window > Package Manager`
-- Click dropdown: "Unity Registry" (not "In Project")
-- Search for "AR Foundation" → Click "Install"
-- Search for "ARCore XR Plugin" → Click "Install"
-- Wait for packages to install
+1. **Edit → Project Settings**.
+2. Open **XR Plug-in Management**.
+3. If you see **Install XR Plug-in Management**, click it.
+4. Select the **Android** tab (Android icon).
+5. Enable **ARCore** (and any other providers you need).
 
-**What you'll learn**: Unity Package Manager, AR Foundation ecosystem
+See [Choose and configure XR provider plug-ins](https://docs.unity3d.com/6000.1/Documentation/Manual/xr-configure-providers.html). Use **Project Validation** in the same section to fix any reported issues.
 
-### Step 4: Create Folder Structure
+---
 
-**In Project window (bottom):**
+### Step 4: Switch to Android and Configure Player Settings
 
-- Right-click `Assets` folder → `Create > Folder`
-- Create folders: `Scenes`, `Scripts`, `Prefabs`
+1. **File → Build Profiles** (Unity 6).  
+   - If your version uses **File → Build Settings**, use that instead; the flow is similar.
+2. Add an **Android** build profile if you don’t have one (e.g. **Add Build Profile** → **Platform Browser** → **Android** → **Add Build Profile**).
+3. **Switch** to the Android profile.
+4. Open **Edit → Project Settings → Player**.
+5. Under **Other Settings** (and any Android-specific overrides):
+   - **Package Name**: e.g. `com.yourname.arapp`.
+   - **Version**: e.g. `0.1`.
+6. Set **Minimum API Level** and **Target API Level** as required for ARCore (typically minimum API 24). Use **Project Validation** and ARCore package docs if unsure.
+7. **Edit → Preferences → External Tools**: set **Android SDK** path if Unity doesn’t detect it.  
+   - You can also install the SDK via Unity Hub (**Add modules** when adding the Android module).
 
-**What you'll learn**: Unity project organization, folder structure
+See [Build your application for Android](https://docs.unity3d.com/6000.1/Documentation/Manual/android-BuildProcess.html) and [Android SDK setup](https://docs.unity3d.com/6000.1/Documentation/Manual/android-sdksetup.html).
 
-### Step 5: Create AR Scene
+---
 
-**In Unity Editor:**
+### Step 5: (Optional) Test in Editor with XR Simulation
 
-- Go to `File > New Scene` → Select "Basic (Built-in)"
-- Go to `File > Save As` → Save as `ARScene` in `Assets/Scenes/`
-- In Hierarchy window (left):
-  - Right-click → `XR > AR Session Origin`
-  - Right-click → `XR > AR Session`
-- Select "AR Session Origin" in Hierarchy:
-  - In Inspector (right), verify it has "AR Camera" child
-  - Add component: `AR Plane Manager` (Add Component → XR → AR Plane Manager)
+The AR Mobile template supports **XR Simulation** so you can test in the Editor without a device:
 
-**What you'll learn**: Scene creation, AR Foundation GameObjects, component system
+1. **Edit → Project Settings → XR Plug-in Management**.
+2. Set **Desktop** plug-in provider to **XR Simulation** and enable **Initialize XR on Startup**.
+3. **File → Build Profiles** → switch to **Android** (XR Simulation works better with Android/iOS as build target; see template docs).
+4. Enter **Play** mode.
+5. In the Game view: **Right‑click + move** to rotate; **Right‑click + W/A/S/D/Q/E** to move.
 
-### Step 6: Create Simple 3D Object Prefab
+**Note:** With XR Simulation, on-screen UI may not appear correctly until the build target is Android (or iOS). See the [AR Mobile Template Quick Start](https://docs.unity3d.com/Packages/com.unity.template.ar-mobile@2.0/manual/index.html#xr-simulation).
 
-**In Unity Editor:**
+---
 
-- In Hierarchy, right-click → `3D Object > Cube` (or Sphere)
-- Rename it to "ARObject"
-- Position at (0, 0, 0) - this is just for prefab creation
-- In Project window, drag "ARObject" from Hierarchy to `Assets/Prefabs/` folder
-- Delete "ARObject" from Hierarchy (keep the prefab)
+### Step 6: Connect Your Android Device
 
-**What you'll learn**: Prefab creation, 3D object basics
+1. On the phone: **Settings → About Phone** → tap **Build Number** 7 times to enable **Developer Options**.
+2. **Settings → Developer Options** → enable **USB Debugging**.
+3. Connect the device via USB. On first connect, allow **USB debugging** when prompted.
+4. On Windows, install a device-specific USB driver if the device isn’t recognized.  
+   See Unity’s [Debug on Android devices](https://docs.unity3d.com/6000.1/Documentation/Manual/android-debugging-on-an-android-device.html) and Android’s [Configure developer options](https://developer.android.com/studio/debug/dev-options) / [Set up a device for development](https://developer.android.com/studio/run/device#setting-up).
 
-### Step 7: Create AR Placement Script
+---
 
-**In Unity Editor:**
+### Step 7: Build and Run on Device
 
-- In Project window, right-click `Assets/Scripts/` → `Create > C# Script`
-- Name it `ARPlacementController`
-- Double-click to open in Visual Studio 2026
-- Write minimal script that:
-  - Detects screen taps
-  - Raycasts to AR planes
-  - Instantiates prefab at hit location
-- Save script and return to Unity (auto-compiles)
-- In Hierarchy, select "AR Session Origin"
-- In Inspector, click "Add Component" → Add `ARPlacementController` script
-- Drag `ARObject` prefab from Project to script's "Object To Place" field
+1. **File → Build Profiles** (or **Build Settings**).
+2. Select the **Android** build profile.
+3. Ensure **SampleScene** is in **Scenes In Build** (add it if missing).
+4. Set **Run Device** to your connected phone (use **Refresh** if it doesn’t appear).
+5. Click **Build And Run**. Choose an output path when prompted; Unity builds the APK and installs it on the device.
 
-**What you'll learn**: C# scripting in Unity, MonoBehaviour pattern, component attachment, Inspector references
+See [Build your application for Android](https://docs.unity3d.com/6000.1/Documentation/Manual/android-BuildProcess.html) and [Debug on Android devices](https://docs.unity3d.com/6000.1/Documentation/Manual/android-debugging-on-an-android-device.html).
 
-### Step 8: Configure Android Build Settings
+---
 
-**In Unity Editor:**
+### Step 8: Use the App (Minimal AR Flow)
 
-- Go to `Edit > Project Settings > Player`
-- Under "Other Settings":
-  - Package Name: `com.yourname.arapp` (change "yourname" to your name)
-  - Version: 0.1
-- Go to `Edit > Preferences > External Tools`
-- Set Android SDK path (if not auto-detected):
-  - Usually: `C:\Users\[YourUser]\AppData\Local\Android\Sdk`
-  - Or install via Unity Hub: `Installs > Add Modules > Android Build Support`
+- Open the app on the device. Point the camera at a flat, textured surface (e.g. floor, table).
+- When planes are detected, use the **Create** menu (e.g. bottom button), pick an object, then tap on a plane to place it.
+- Use the **Options** menu (e.g. top-right) for interaction hints, **Visualize Surfaces**, **Remove All Objects**, or **AR Debug Menu** as needed.
 
-**What you'll learn**: Android package naming, SDK configuration
+This is the minimal AR flow provided by the template—no custom code required.
 
-### Step 9: Android Device Setup (One-Time)
+---
 
-**On your Android phone:**
+## Optional: Minimal Scene by Removing Example Assets
 
-1. Go to `Settings > About Phone`
-2. Tap "Build Number" 7 times (enables Developer Options)
-3. Go back to `Settings > Developer Options`
-4. Enable "USB Debugging"
-5. Connect phone to PC via USB
-6. On phone, allow USB debugging when prompted
+If you want a **minimal** scene with only AR basics (no template UI/assets):
 
-**In Unity Editor:**
+1. In the **Project** window, under **Assets**, right‑click **MobileARTemplateAssets** → **Delete** → confirm.
+2. Remove any **disconnected script** from the **XR Origin** GameObject (the template docs mention “ARSessionOrigin XROrigin object”) to avoid errors.
 
-- Go to `File > Build Settings`
-- Click "Run Device" dropdown - your device should appear
-- If not visible, check USB drivers or try different USB cable/port
+See [AR Mobile Template – Removing the example Assets](https://docs.unity3d.com/Packages/com.unity.template.ar-mobile@2.0/manual/index.html#removing-the-example-assets-from-the-scene). After this, you still have XR Origin, AR Session, and plane detection; you’d add your own spawn logic or UI if needed.
 
-**What you'll learn**: Android developer setup, device connection
+---
 
-### Step 10: Build and Test
+## Troubleshooting
 
-**In Unity Editor:**
+- **AR / tracking not working**: Confirm device supports [ARCore](https://developers.google.com/ar/discover/supported-devices). Check XR Plug-in Management → Android → ARCore enabled.
+- **Build fails**: Check Android SDK path, API levels, and **Project Validation** under XR Plug-in Management.
+- **Device not listed**: Verify USB debugging, cable, and drivers. Try **Refresh** in Build Profiles / Run Device.
+- **Planes not detected**: Use adequate lighting and textured surfaces.
+- **Samsung S23 Ultra**: Template [known issue](https://docs.unity3d.com/Packages/com.unity.template.ar-mobile@2.0/manual/index.html#known-issues): tap input can behave oddly when spawning objects nearby.
 
-- Ensure `ARScene` is open and saved
-- Go to `File > Build Settings`
-- Verify "ARScene" is in "Scenes In Build" list (add if needed)
-- Select your Android device from "Run Device" dropdown
-- Click "Build And Run"
-- Unity will build APK and install on device
-- App should launch and show camera view
-- Point camera at flat surface (floor/table)
-- Tap screen to place object
+---
 
-**What you'll learn**: Build process, deployment workflow, AR testing
+## What You’ll Learn
 
-## Script Template for ARPlacementController.cs
+- **Unity Hub**: Creating a project from a template, setting location and name.
+- **AR Mobile template**: Preconfigured URP, AR Foundation, ARCore, SampleScene, XR Origin, Object Spawner, UI.
+- **Editor**: Project Settings, XR Plug-in Management, Player settings, Build Profiles (or Build Settings).
+- **Android**: Switching platform, Run Device, Build and Run, basic device setup (USB debugging).
+- **Minimal AR**: Plane detection + tap-to-place using the template’s SampleScene.
 
-The script you'll write in Step 7 should include:
+---
 
-- Reference to AR Raycast Manager (for raycasting to planes)
-- Reference to prefab to instantiate
-- Input handling (touch/tap detection)
-- Raycast from screen tap to AR planes
-- Instantiate prefab at hit location
-- Basic error handling
+## Prerequisites
 
-## Key Concepts You'll Learn
+- Unity Hub and Unity Editor (e.g. 6.3 LTS) installed.
+- Android module installed (via Hub) if you build to device.
+- Android phone with [ARCore support](https://developers.google.com/ar/discover/supported-devices), USB cable, and USB debugging enabled.
+- (Optional) Visual Studio for editing scripts when you extend the project.
 
-- **Unity Editor Interface**: Scene view, Game view, Hierarchy, Inspector, Project window
-- **GameObjects and Components**: How Unity's entity-component system works
-- **AR Foundation**: AR Session Origin, AR Session, AR Plane Manager, AR Raycast Manager
-- **Prefabs**: Reusable object templates
-- **C# Scripting**: MonoBehaviour lifecycle, component references, input handling
-- **Android Build Pipeline**: Platform switching, build settings, APK generation
-- **Device Deployment**: USB debugging, direct deployment from Unity
+---
 
-## Troubleshooting Tips
+## Next Steps
 
-- **AR not working**: Ensure device supports ARCore (check Google's ARCore device list)
-- **Build fails**: Verify Android SDK path, check minimum API level
-- **Device not detected**: Check USB debugging, try different USB cable
-- **Script errors**: Check Console window (Window > General > Console) for compilation errors
-- **Planes not detected**: Ensure good lighting, point camera at textured surfaces
-
-## Next Steps After This Guide
-
-Once you've completed the basic app:
-
-- The project will be in your workspace for AI-assisted improvements
-- You can add features like object rotation, multiple object types, UI buttons
-- Experiment with AR features: anchors, face tracking, image tracking
-- Optimize performance and add polish
-
-## Technical Details
-
-- **AR Framework**: AR Foundation (Unity's cross-platform AR framework)
-- **AR Provider**: ARCore (Google's AR platform for Android)
-- **Rendering**: Built-in Render Pipeline (simplest for beginners)
-- **Scripting**: C# scripts using Unity's MonoBehaviour pattern
-- **Minimal Functionality**: Plane detection + tap-to-place single object
-
-## Why This Approach?
-
-- **Hands-on Learning**: You'll use Unity Editor tools directly, building muscle memory
-- **Standard Workflow**: Follows Unity's recommended practices
-- **AI-Ready**: Project saved to workspace allows future AI assistance for improvements
-- **Minimal but Complete**: Simple enough to understand, complete enough to be functional
-
-## Prerequisites Check
-
-Before starting, ensure:
-
-- ✅ Unity Hub and Unity Editor 6.3 LTS are installed
-- ⚠️ Android SDK (will install via Unity Hub if needed)
-- ⚠️ Android device supports ARCore (check: https://developers.google.com/ar/discover/supported-devices)
-- ✅ USB cable for device connection
-- ✅ Visual Studio 2026 installed (for script editing)
-
-## Notes
-
-- All Unity-generated files (ProjectSettings, Packages, Library) will be in the workspace
-- `.gitignore` is already configured to exclude build artifacts and temporary files
-- After completing the guide, you can commit the project structure to git
-- Future AI assistance can help improve scripts, add features, optimize performance
+- Keep the project in `C:\Repos\github\pm-unity\` for version control and AI-assisted changes.
+- Use **Configure your AR development environment** on Unity Learn for a more detailed walkthrough.
+- After you’re comfortable, remove example assets for a minimal scene, or add your own objects and UI.
