@@ -222,6 +222,7 @@ namespace UnityEngine.XR.Templates.AR
         readonly List<ARPlane> m_ARPlanes = new List<ARPlane>();
         readonly Dictionary<ARPlane, ARPlaneMeshVisualizer> m_ARPlaneMeshVisualizers = new Dictionary<ARPlane, ARPlaneMeshVisualizer>();
         readonly Dictionary<ARPlane, ARPlaneMeshVisualizerFader> m_ARPlaneMeshVisualizerFaders = new Dictionary<ARPlane, ARPlaneMeshVisualizerFader>();
+        readonly Dictionary<ARPlane, ARPlaneEdgeVisualizer> m_ARPlaneEdgeVisualizers = new Dictionary<ARPlane, ARPlaneEdgeVisualizer>();
 
         /// <summary>
         /// See <see cref="MonoBehaviour"/>.
@@ -446,6 +447,12 @@ namespace UnityEngine.XR.Templates.AR
                     else
                         fader.SetVisualsImmediate(1f);
                 }
+
+                // Update edge visualizer visibility to match plane visibility
+                if (m_ARPlaneEdgeVisualizers.TryGetValue(plane, out var edgeVisualizer))
+                {
+                    edgeVisualizer.isVisible = setVisible;
+                }
             }
         }
 
@@ -558,6 +565,14 @@ namespace UnityEngine.XR.Templates.AR
                     }
                     m_ARPlaneMeshVisualizerFaders.Add(plane, visualizer);
                     visualizer.visualizeSurfaces = m_VisualizePlanes;
+
+                    // Add edge visualizer to new planes
+                    if (!plane.TryGetComponent<ARPlaneEdgeVisualizer>(out var edgeVisualizer))
+                    {
+                        edgeVisualizer = plane.gameObject.AddComponent<ARPlaneEdgeVisualizer>();
+                    }
+                    m_ARPlaneEdgeVisualizers.Add(plane, edgeVisualizer);
+                    edgeVisualizer.isVisible = m_VisualizePlanes;
                 }
             }
 
@@ -577,6 +592,9 @@ namespace UnityEngine.XR.Templates.AR
 
                     if (m_ARPlaneMeshVisualizerFaders.ContainsKey(planeGameObject))
                         m_ARPlaneMeshVisualizerFaders.Remove(planeGameObject);
+
+                    if (m_ARPlaneEdgeVisualizers.ContainsKey(planeGameObject))
+                        m_ARPlaneEdgeVisualizers.Remove(planeGameObject);
                 }
             }
 
@@ -586,6 +604,7 @@ namespace UnityEngine.XR.Templates.AR
                 m_ARPlanes.Clear();
                 m_ARPlaneMeshVisualizers.Clear();
                 m_ARPlaneMeshVisualizerFaders.Clear();
+                m_ARPlaneEdgeVisualizers.Clear();
 
                 foreach (var plane in m_PlaneManager.trackables)
                 {
@@ -605,6 +624,14 @@ namespace UnityEngine.XR.Templates.AR
                     }
                     m_ARPlaneMeshVisualizerFaders.Add(plane, fader);
                     fader.visualizeSurfaces = m_VisualizePlanes;
+
+                    // Add edge visualizer
+                    if (!plane.TryGetComponent<ARPlaneEdgeVisualizer>(out var edgeVisualizer))
+                    {
+                        edgeVisualizer = plane.gameObject.AddComponent<ARPlaneEdgeVisualizer>();
+                    }
+                    m_ARPlaneEdgeVisualizers.Add(plane, edgeVisualizer);
+                    edgeVisualizer.isVisible = m_VisualizePlanes;
                 }
             }
         }
