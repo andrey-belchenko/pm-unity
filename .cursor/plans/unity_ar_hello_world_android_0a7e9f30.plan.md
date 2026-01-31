@@ -1,10 +1,3 @@
----
-name: Unity AR Minimal Android
-overview: Guide user through creating a minimal Unity AR app for Android using the AR Mobile project template and standard Unity tools. Project saved to current workspace for future AI-assisted development.
-todos: []
-isProject: false
----
-
 # Unity AR Minimal App for Android - Step-by-Step Guide
 
 ## Overview
@@ -61,13 +54,13 @@ pm-unity/
 **In Unity Hub:**
 
 1. Click **New Project**.
-2. Select the **AR Mobile** template.  
+2. Select the **AR Mobile** template.
 
-   - If you don’t see it, click **Download template** when prompted.
+  - If you don’t see it, click **Download template** when prompted.
 
-3. Set **Project location** to `C:\Repos\github\pm-unity\` (or your workspace root).  
+3. Set **Project location** to `C:\Repos\github\pm-unity\` (or your workspace root).
 
-   - Ensure you’re not creating a subfolder like `pm-unity\pm-unity`; the project root should be the workspace.
+  - Ensure you’re not creating a subfolder like `pm-unity\pm-unity`; the project root should be the workspace.
 
 4. Set **Project name** (e.g. `pm-unity`) and click **Create project**.
 
@@ -98,22 +91,22 @@ See [Choose and configure XR provider plug-ins](https://docs.unity3d.com/6000.1/
 
 ### Step 4: Switch to Android and Configure Player Settings
 
-1. **File → Build Profiles** (Unity 6).  
+1. **File → Build Profiles** (Unity 6).
 
-   - If your version uses **File → Build Settings**, use that instead; the flow is similar.
+  - If your version uses **File → Build Settings**, use that instead; the flow is similar.
 
 2. Add an **Android** build profile if you don’t have one (e.g. **Add Build Profile** → **Platform Browser** → **Android** → **Add Build Profile**).
 3. **Switch** to the Android profile.
 4. Open **Edit → Project Settings → Player**.
 5. Under **Other Settings** (and any Android-specific overrides):
 
-   - **Package Name**: e.g. `com.yourname.arapp`.
-   - **Version**: e.g. `0.1`.
+  - **Package Name**: e.g. `com.yourname.arapp`.
+  - **Version**: e.g. `0.1`.
 
 6. Set **Minimum API Level** and **Target API Level** as required for ARCore (typically minimum API 24). Use **Project Validation** and ARCore package docs if unsure.
-7. **Edit → Preferences → External Tools**: set **Android SDK** path if Unity doesn’t detect it.  
+7. **Edit → Preferences → External Tools**: set **Android SDK** path if Unity doesn’t detect it.
 
-   - You can also install the SDK via Unity Hub (**Add modules** when adding the Android module).
+  - You can also install the SDK via Unity Hub (**Add modules** when adding the Android module).
 
 See [Build your application for Android](https://docs.unity3d.com/6000.1/Documentation/Manual/android-BuildProcess.html) and [Android SDK setup](https://docs.unity3d.com/6000.1/Documentation/Manual/android-sdksetup.html).
 
@@ -138,7 +131,7 @@ The AR Mobile template supports **XR Simulation** so you can test in the Editor 
 1. On the phone: **Settings → About Phone** → tap **Build Number** 7 times to enable **Developer Options**.
 2. **Settings → Developer Options** → enable **USB Debugging**.
 3. Connect the device via USB. On first connect, allow **USB debugging** when prompted.
-4. On Windows, install a device-specific USB driver if the device isn’t recognized.  
+4. On Windows, install a device-specific USB driver if the device isn’t recognized.
 
 See Unity’s [Debug on Android devices](https://docs.unity3d.com/6000.1/Documentation/Manual/android-debugging-on-an-android-device.html) and Android’s [Configure developer options](https://developer.android.com/studio/debug/dev-options) / [Set up a device for development](https://developer.android.com/studio/run/device#setting-up).
 
