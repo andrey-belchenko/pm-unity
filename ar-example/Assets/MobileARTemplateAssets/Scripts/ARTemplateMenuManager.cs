@@ -185,6 +185,45 @@ namespace UnityEngine.XR.Templates.AR
         }
 
         [SerializeField]
+        [Tooltip("Button that restarts AR scanning.")]
+        Button m_RestartScanningButton;
+
+        /// <summary>
+        /// Button that restarts AR scanning.
+        /// </summary>
+        public Button restartScanningButton
+        {
+            get => m_RestartScanningButton;
+            set => m_RestartScanningButton = value;
+        }
+
+        [SerializeField]
+        [Tooltip("The AR Session component.")]
+        ARSession m_ARSession;
+
+        /// <summary>
+        /// The AR Session component.
+        /// </summary>
+        public ARSession arSession
+        {
+            get => m_ARSession;
+            set => m_ARSession = value;
+        }
+
+        [SerializeField]
+        [Tooltip("The plane intersection visualizer component.")]
+        ARPlaneIntersectionVisualizer m_IntersectionVisualizer;
+
+        /// <summary>
+        /// The plane intersection visualizer component.
+        /// </summary>
+        public ARPlaneIntersectionVisualizer intersectionVisualizer
+        {
+            get => m_IntersectionVisualizer;
+            set => m_IntersectionVisualizer = value;
+        }
+
+        [SerializeField]
         XRInputValueReader<Vector2> m_TapStartPositionInput = new XRInputValueReader<Vector2>("Tap Start Position");
 
         /// <summary>
@@ -213,7 +252,7 @@ namespace UnityEngine.XR.Templates.AR
         bool m_IsPointerOverUI;
         bool m_ShowObjectMenu;
         bool m_ShowOptionsModal;
-        bool m_VisualizePlanes = true;
+        bool m_VisualizePlanes = false; // Disabled by default - we only show intersections
         bool m_ShowDebugMenu;
         bool m_InitializingDebugMenu;
         float m_DebugMenuPlanesButtonValue = 0f;
@@ -222,16 +261,32 @@ namespace UnityEngine.XR.Templates.AR
         readonly List<ARPlane> m_ARPlanes = new List<ARPlane>();
         readonly Dictionary<ARPlane, ARPlaneMeshVisualizer> m_ARPlaneMeshVisualizers = new Dictionary<ARPlane, ARPlaneMeshVisualizer>();
         readonly Dictionary<ARPlane, ARPlaneMeshVisualizerFader> m_ARPlaneMeshVisualizerFaders = new Dictionary<ARPlane, ARPlaneMeshVisualizerFader>();
-        readonly Dictionary<ARPlane, ARPlaneEdgeVisualizer> m_ARPlaneEdgeVisualizers = new Dictionary<ARPlane, ARPlaneEdgeVisualizer>();
 
         /// <summary>
         /// See <see cref="MonoBehaviour"/>.
         /// </summary>
         void OnEnable()
         {
-            m_CreateButton.onClick.AddListener(ShowMenu);
-            m_CancelButton.onClick.AddListener(HideMenu);
-            m_DeleteButton.onClick.AddListener(DeleteFocusedObject);
+            // Disable object spawning UI
+            if (m_CreateButton != null)
+            {
+                m_CreateButton.gameObject.SetActive(false);
+            }
+            if (m_DeleteButton != null)
+            {
+                m_DeleteButton.gameObject.SetActive(false);
+            }
+            if (m_ObjectMenu != null)
+            {
+                m_ObjectMenu.SetActive(false);
+            }
+
+            // Setup restart scanning button
+            if (m_RestartScanningButton != null)
+            {
+                m_RestartScanningButton.onClick.AddListener(RestartScanning);
+            }
+
             m_PlaneManager.trackablesChanged.AddListener(OnPlaneChanged);
         }
 
@@ -241,9 +296,10 @@ namespace UnityEngine.XR.Templates.AR
         void OnDisable()
         {
             m_ShowObjectMenu = false;
-            m_CreateButton.onClick.RemoveListener(ShowMenu);
-            m_CancelButton.onClick.RemoveListener(HideMenu);
-            m_DeleteButton.onClick.RemoveListener(DeleteFocusedObject);
+            if (m_RestartScanningButton != null)
+            {
+                m_RestartScanningButton.onClick.RemoveListener(RestartScanning);
+            }
             m_PlaneManager.trackablesChanged.RemoveListener(OnPlaneChanged);
         }
 
@@ -262,10 +318,36 @@ namespace UnityEngine.XR.Templates.AR
                 InitializeDebugMenuOffsets();
             }
 
-            HideMenu();
+            // Hide object menu
+            if (m_ObjectMenu != null)
+            {
+                m_ObjectMenu.SetActive(false);
+            }
+
+            // Get AR Session if not set
+            if (m_ARSession == null)
+            {
+                m_ARSession = FindObjectOfType<ARSession>();
+            }
+
+            // Get intersection visualizer if not set
+            if (m_IntersectionVisualizer == null)
+            {
+                m_IntersectionVisualizer = FindObjectOfType<ARPlaneIntersectionVisualizer>();
+                if (m_IntersectionVisualizer == null)
+                {
+                    // Create intersection visualizer
+                    GameObject visualizerObj = new GameObject("Plane Intersection Visualizer");
+                    m_IntersectionVisualizer = visualizerObj.AddComponent<ARPlaneIntersectionVisualizer>();
+                    m_IntersectionVisualizer.planeManager = m_PlaneManager;
+                }
+            }
 
             m_DebugMenuSlider.value = m_ShowDebugMenu ? 1 : 0;
             m_DebugPlaneSlider.value = m_VisualizePlanes ? 1 : 0;
+
+            // Disable plane mesh visualization by default
+            ChangePlaneVisibility(false);
         }
 
         /// <summary>
@@ -433,27 +515,59 @@ namespace UnityEngine.XR.Templates.AR
 
         void ChangePlaneVisibility(bool setVisible)
         {
+            // Disable plane mesh visualization - we only show intersections
             foreach (var plane in m_ARPlanes)
             {
                 if (m_ARPlaneMeshVisualizers.TryGetValue(plane, out var visualizer))
                 {
-                    visualizer.enabled = m_UseARPlaneFading ? true : setVisible;
+                    visualizer.enabled = false; // Always disabled
                 }
 
                 if (m_ARPlaneMeshVisualizerFaders.TryGetValue(plane, out var fader))
                 {
-                    if (m_UseARPlaneFading)
-                        fader.visualizeSurfaces = setVisible;
-                    else
-                        fader.SetVisualsImmediate(1f);
-                }
-
-                // Update edge visualizer visibility to match plane visibility
-                if (m_ARPlaneEdgeVisualizers.TryGetValue(plane, out var edgeVisualizer))
-                {
-                    edgeVisualizer.isVisible = setVisible;
+                    fader.visualizeSurfaces = false; // Always disabled
                 }
             }
+        }
+
+        /// <summary>
+        /// Restarts AR scanning by resetting the AR Session and clearing all planes.
+        /// </summary>
+        public void RestartScanning()
+        {
+            if (m_ARSession == null)
+            {
+                Debug.LogWarning("AR Session not found. Cannot restart scanning.");
+                return;
+            }
+
+            // Clear intersection visualizations
+            if (m_IntersectionVisualizer != null)
+            {
+                m_IntersectionVisualizer.ClearAllIntersections();
+            }
+
+            // Reset AR Session
+            m_ARSession.Reset();
+
+            // Clear all tracked planes
+            if (m_PlaneManager != null)
+            {
+                foreach (var plane in m_PlaneManager.trackables)
+                {
+                    if (plane != null && plane.gameObject != null)
+                    {
+                        Destroy(plane.gameObject);
+                    }
+                }
+            }
+
+            // Clear our tracking dictionaries
+            m_ARPlanes.Clear();
+            m_ARPlaneMeshVisualizers.Clear();
+            m_ARPlaneMeshVisualizerFaders.Clear();
+
+            Debug.Log("AR scanning restarted.");
         }
 
         void DeleteFocusedObject()
@@ -550,13 +664,12 @@ namespace UnityEngine.XR.Templates.AR
                 foreach (var plane in eventArgs.added)
                 {
                     m_ARPlanes.Add(plane);
+                    
+                    // Disable plane mesh visualization
                     if (plane.TryGetComponent<ARPlaneMeshVisualizer>(out var vizualizer))
                     {
                         m_ARPlaneMeshVisualizers.Add(plane, vizualizer);
-                        if (!m_UseARPlaneFading)
-                        {
-                            vizualizer.enabled = m_VisualizePlanes;
-                        }
+                        vizualizer.enabled = false; // Always disabled
                     }
 
                     if (!plane.TryGetComponent<ARPlaneMeshVisualizerFader>(out var visualizer))
@@ -564,15 +677,7 @@ namespace UnityEngine.XR.Templates.AR
                         visualizer = plane.gameObject.AddComponent<ARPlaneMeshVisualizerFader>();
                     }
                     m_ARPlaneMeshVisualizerFaders.Add(plane, visualizer);
-                    visualizer.visualizeSurfaces = m_VisualizePlanes;
-
-                    // Add edge visualizer to new planes
-                    if (!plane.TryGetComponent<ARPlaneEdgeVisualizer>(out var edgeVisualizer))
-                    {
-                        edgeVisualizer = plane.gameObject.AddComponent<ARPlaneEdgeVisualizer>();
-                    }
-                    m_ARPlaneEdgeVisualizers.Add(plane, edgeVisualizer);
-                    edgeVisualizer.isVisible = m_VisualizePlanes;
+                    visualizer.visualizeSurfaces = false; // Always disabled
                 }
             }
 
@@ -592,9 +697,6 @@ namespace UnityEngine.XR.Templates.AR
 
                     if (m_ARPlaneMeshVisualizerFaders.ContainsKey(planeGameObject))
                         m_ARPlaneMeshVisualizerFaders.Remove(planeGameObject);
-
-                    if (m_ARPlaneEdgeVisualizers.ContainsKey(planeGameObject))
-                        m_ARPlaneEdgeVisualizers.Remove(planeGameObject);
                 }
             }
 
@@ -604,18 +706,16 @@ namespace UnityEngine.XR.Templates.AR
                 m_ARPlanes.Clear();
                 m_ARPlaneMeshVisualizers.Clear();
                 m_ARPlaneMeshVisualizerFaders.Clear();
-                m_ARPlaneEdgeVisualizers.Clear();
 
                 foreach (var plane in m_PlaneManager.trackables)
                 {
                     m_ARPlanes.Add(plane);
+                    
+                    // Disable plane mesh visualization
                     if (plane.TryGetComponent<ARPlaneMeshVisualizer>(out var vizualizer))
                     {
                         m_ARPlaneMeshVisualizers.Add(plane, vizualizer);
-                        if (!m_UseARPlaneFading)
-                        {
-                            vizualizer.enabled = m_VisualizePlanes;
-                        }
+                        vizualizer.enabled = false; // Always disabled
                     }
 
                     if (!plane.TryGetComponent<ARPlaneMeshVisualizerFader>(out var fader))
@@ -623,15 +723,7 @@ namespace UnityEngine.XR.Templates.AR
                         fader = plane.gameObject.AddComponent<ARPlaneMeshVisualizerFader>();
                     }
                     m_ARPlaneMeshVisualizerFaders.Add(plane, fader);
-                    fader.visualizeSurfaces = m_VisualizePlanes;
-
-                    // Add edge visualizer
-                    if (!plane.TryGetComponent<ARPlaneEdgeVisualizer>(out var edgeVisualizer))
-                    {
-                        edgeVisualizer = plane.gameObject.AddComponent<ARPlaneEdgeVisualizer>();
-                    }
-                    m_ARPlaneEdgeVisualizers.Add(plane, edgeVisualizer);
-                    edgeVisualizer.isVisible = m_VisualizePlanes;
+                    fader.visualizeSurfaces = false; // Always disabled
                 }
             }
         }
